@@ -21,7 +21,3 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	</secure-properties:config>
 </mule>
 `;
-
-export const muleExclude = `\
-**/src/main/mule/encrypt.key.xml
-`;

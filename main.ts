@@ -7,7 +7,7 @@ import {
   writeEnsuringDir,
   yamlifySecrets,
 } from "./utils.ts";
-import { getEncryptKeyXML, muleExclude, secretsXML } from "./fileText.ts";
+import { getEncryptKeyXML, secretsXML } from "./fileText.ts";
 
 const token = JSON.parse(atob(await getFirstToken("infisical-cli")))?.JTWToken;
 
@@ -43,7 +43,6 @@ const { key, yaml } = yamlifySecrets(s.secrets);
 
 // Write the files
 await writeEnsuringDir(await getRootDir(), [
-  { path: "_muleExclude", text: muleExclude },
   { path: "src/main/mule/encrypt.key.xml", text: getEncryptKeyXML(key) },
   { path: "src/main/mule/secrets.xml", text: secretsXML },
   { path: "src/main/resources/secrets.yaml", text: yaml },
