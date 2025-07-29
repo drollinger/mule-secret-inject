@@ -1,7 +1,7 @@
 import { dirname, join } from "jsr:@std/path@1.1.1";
 import { stringify } from "jsr:@std/yaml@1.0.9";
-import { Blowfish } from "npm:egoroof-blowfish";
-import type { Secret } from "npm:@infisical/sdk";
+import { Blowfish } from "npm:egoroof-blowfish@4.0.1";
+import type { Secret } from "npm:@infisical/sdk@4.0.4";
 
 const INFISICAL_CONFIG_NAME = ".infisical.json";
 export const loadInfisicalConfig = async () => {

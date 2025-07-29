@@ -1,4 +1,4 @@
-import { InfisicalSDK } from "npm:@infisical/sdk";
+import { InfisicalSDK } from "npm:@infisical/sdk@4.0.4";
 import { getFirstToken } from "./keyring.ts";
 import {
   getInfisicalDomain,
