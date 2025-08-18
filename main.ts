@@ -23,10 +23,8 @@ const client = new InfisicalSDK({
 client.auth().accessToken(token);
 
 const { workspaceId, defaultEnvironment } = await loadInfisicalConfig();
-// const projectId = Deno.env.get("INFISICAL_PROJECT") ?? workspaceId;
-// const environment = Deno.env.get("INFISICAL_ENVIRONMENT") ?? defaultEnvironment;
-const projectId = workspaceId;
-const environment = defaultEnvironment;
+const projectId = Deno.env.get("INFISICAL_PROJECT") ?? workspaceId;
+const environment = Deno.env.get("INFISICAL_ENVIRONMENT") ?? defaultEnvironment;
 
 if (!projectId || !environment) {
   console.error("workspaceId and defaultEnvironment not defined. Exiting...");
