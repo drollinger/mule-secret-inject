@@ -1,5 +1,5 @@
 import { InfisicalSDK } from "npm:@infisical/sdk@4.0.4";
-import { getFirstToken } from "./keyring.ts";
+import { getToken } from "./keyring.ts";
 import {
   getInfisicalDomain,
   getRootDir,
@@ -9,10 +9,10 @@ import {
 } from "./utils.ts";
 import { getEncryptKeyXML, secretsXML } from "./fileText.ts";
 
-const token = JSON.parse(atob(await getFirstToken("infisical-cli")))?.JTWToken;
+const token = await getToken();
 
 if (!token) {
-  console.error("No JTWToken found in saved value to keyring");
+  console.error("Infisical did not return a token!");
   Deno.exit(1);
 }
 
