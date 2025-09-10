@@ -1,53 +1,32 @@
-import { InfisicalSDK } from "npm:@infisical/sdk@4.0.4";
-import { getToken } from "./keyring.ts";
-import {
-  getInfisicalDomain,
-  getRootDir,
-  loadInfisicalConfig,
-  writeEnsuringDir,
-  yamlifySecrets,
-} from "./utils.ts";
-import { getEncryptKeyXML, secretsXML } from "./fileText.ts";
+import { Command } from "@cliffy/command";
+import cfg from "./deno.json" with { type: "json" };
+import { inject } from "./inject.ts";
+import { build } from "./build.ts";
 
-const token = await getToken();
+export const cmd = new Command()
+  // Main command.
+  .name("@usu/mule-secret-inject")
+  .version(cfg.version)
+  .description("CLI tool for integrating Mulesoft with Infisical")
+  .globalOption("-e, --environment <environment>", "Infisical environment")
+  .globalOption("-a, --all-env", "Inject all environments")
+  .globalOption("-p, --project <id>", "Infisical project id");
 
-if (!token) {
-  console.error("Infisical did not return a token!");
-  Deno.exit(1);
-}
+// Inject secrets command
+export const cmdInject = cmd
+  .command("inject", "Inject secrets setup into project")
+  .option("-g, --git-ignore", "Include .gitignore")
+  .action(inject)
 
-const client = new InfisicalSDK({
-  siteUrl: await getInfisicalDomain(),
-});
+// Build jar command
+export const cmdBuild = cmd
+  .command("build", "Build jar export for Anypoint")
+  .option("-m, --manual", `Waits for Anypoint export
+* Use if you don't have mvn installed
+* NOT YET IMPLEMENTED`)
+  .option("-o, --output <filename:file>", `Name of output file
+* Use {e} to add the environment
+* Default: parentFolder-{e}.jar`)
+  .action(build)
 
-client.auth().accessToken(token);
-
-const { workspaceId, defaultEnvironment } = await loadInfisicalConfig();
-const projectId = Deno.env.get("INFISICAL_PROJECT") ?? workspaceId;
-const environment = Deno.env.get("INFISICAL_ENVIRONMENT") ?? defaultEnvironment;
-
-if (!projectId || !environment) {
-  console.error("workspaceId and defaultEnvironment not defined. Exiting...");
-  Deno.exit(1);
-}
-
-const s = await client.secrets().listSecrets({
-  environment,
-  projectId,
-  recursive: true,
-});
-
-const { key, yaml } = yamlifySecrets(s.secrets);
-
-// Write the files
-await writeEnsuringDir(await getRootDir(), [
-  { path: "src/main/mule/encrypt.key.xml", text: getEncryptKeyXML(key) },
-  { path: "src/main/mule/secrets.xml", text: secretsXML },
-  { path: "src/main/resources/secrets.yaml", text: yaml },
-]);
-
-console.log("Files Written!");
-console.log(
-  "Ensure you have imported 'Mule Secure Configuration Property Extension' from exchange in the palette",
-);
-console.log("You may need to refreash to see any new files 🙄");
+await cmd.parse(Deno.args);
