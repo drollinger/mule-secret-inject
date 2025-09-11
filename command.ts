@@ -9,6 +9,10 @@ export const cmd = new Command()
   .name("@usu/mule-secret-inject")
   .version(cfg.version)
   .description("CLI tool for integrating Mulesoft with Infisical")
+  .action(function () {
+    this.showHelp();
+    Deno.exit(0);
+  })
   .globalOption("-e, --environment <environment>", "Infisical environment")
   .globalOption("-a, --all-env", "Inject all environments")
   .globalOption("-p, --project <id>", "Infisical project id");
