@@ -1,4 +1,4 @@
-import type { cmdBuild } from "./main.ts";
+import type { cmdBuild } from "./command.ts";
 
 export const build = async (
   _options: Parameters<Parameters<typeof cmdBuild.action>[0]>[0]

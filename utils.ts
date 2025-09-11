@@ -4,7 +4,7 @@ import { stringify } from "jsr:@std/yaml@1.0.9";
 import { Blowfish } from "npm:egoroof-blowfish@4.0.1";
 import type { Secret } from "npm:@infisical/sdk@4.0.4";
 import { getToken } from "./keyring.ts";
-import type { cmd } from "./main.ts";
+import type { cmd } from "./command.ts";
 
 const INFISICAL_CONFIG_NAME = ".infisical.json";
 export const findInfisicalConfigDir = async (startDir = Deno.cwd()) => {

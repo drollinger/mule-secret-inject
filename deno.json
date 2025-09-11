@@ -5,10 +5,5 @@
   "exports": "./main.ts",
   "imports": {
     "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.8"
-  },
-  "lint": {
-    "rules": {
-      "exclude": ["missing-explicit-return-type"]
-    }
   }
 }

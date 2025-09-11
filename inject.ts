@@ -17,7 +17,7 @@ import {
   secretsEnvironmentXML,
   secretsXML,
 } from "./fileText.ts";
-import type { cmdInject } from "./main.ts";
+import type { cmdInject } from "./command.ts";
 
 export const inject = async (
   options: Parameters<Parameters<typeof cmdInject.action>[0]>[0]
