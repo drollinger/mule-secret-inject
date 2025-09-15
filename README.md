@@ -2,16 +2,12 @@
 
 CLI for integrating MuleSoft projects with Infisical: inject, build, clean
 
----
-
 ## Prerequisites
 
 - Infisical CLI installed locally (`infisical --version`).
 - You’re logged in to Infisical (`infisical login`).
 - Project root has .infisical.json (`infisical init`).
 - **Recommended**: Apache Maven installed (`mvn -v`).
-
----
 
 ## Quickstart
 
@@ -20,8 +16,6 @@ deno run -A jsr:@usu/mule-secret-inject
 ```
 
 > `-A` (allow-all) is **optional**. Omit it to **manually** approve permissions
-
----
 
 ## Recommended alias
 
@@ -32,8 +26,6 @@ Add this to your shell config:
 ```sh
 alias msi='deno run -A jsr:@usu/mule-secret-inject'
 ```
-
----
 
 ## Usage
 
@@ -104,8 +96,6 @@ Options:
                                       * Default: parentFolder-{e}.jar           
                                       * End with '/' to specify only directory
 ```
-
----
 
 ## Examples
 
