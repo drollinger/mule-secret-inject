@@ -1,9 +1,13 @@
 {
   "name": "@usu/mule-secret-inject",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "MIT",
   "exports": "./main.ts",
   "imports": {
-    "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.8"
+    "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.8",
+    "@std/path": "jsr:@std/path@1.1.1",
+    "@infisical/sdk": "npm:@infisical/sdk@4.0.4",
+    "@std/yaml": "jsr:@std/yaml@1.0.9",
+    "egoroof-blowfish": "npm:egoroof-blowfish@4.0.1"
   }
 }

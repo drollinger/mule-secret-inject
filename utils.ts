@@ -1,10 +1,15 @@
-import { InfisicalSDK } from "npm:@infisical/sdk@4.0.4";
-import { dirname, join } from "jsr:@std/path@1.1.1";
-import { stringify } from "jsr:@std/yaml@1.0.9";
-import { Blowfish } from "npm:egoroof-blowfish@4.0.1";
-import type { Secret } from "npm:@infisical/sdk@4.0.4";
+import { InfisicalSDK, type Secret } from "@infisical/sdk";
+import { dirname, join } from "@std/path";
+import { stringify } from "@std/yaml";
+import { Blowfish } from "egoroof-blowfish";
 import { getToken } from "./keyring.ts";
 import type { cmd } from "./command.ts";
+import {
+  getEncryptKeyEnvironmentXML,
+  getEncryptKeyXML,
+  secretsEnvironmentXML,
+  secretsXML,
+} from "./fileText.ts";
 
 const INFISICAL_CONFIG_NAME = ".infisical.json";
 export const findInfisicalConfigDir = async (startDir = Deno.cwd()) => {
@@ -22,7 +27,7 @@ export const findInfisicalConfigDir = async (startDir = Deno.cwd()) => {
     dir = parent;
   }
   console.error(
-    `${INFISICAL_CONFIG_NAME} does not exist. Please add the required configuration file.`
+    `${INFISICAL_CONFIG_NAME} does not exist. Please add the required configuration file.`,
   );
   Deno.exit(1);
 };
@@ -36,12 +41,12 @@ export const yamlifySecrets = (secrets: Secret[]) => {
   // Get Encryption Key
   const encryptKeySecret = secrets.find(
     (s) =>
-      (!s.secretPath || s.secretPath === "/") && s.secretKey === "encrypt.key"
+      (!s.secretPath || s.secretPath === "/") && s.secretKey === "encrypt.key",
   );
   const key = encryptKeySecret?.secretValue;
   if (!key) {
     console.error(
-      'Error: Infisical vault must have a secret labeled "encrypt.key" in the root directory to encrypt values. Exiting...'
+      'Error: Infisical vault must have a secret labeled "encrypt.key" in the root directory to encrypt values. Exiting...',
     );
     Deno.exit(1);
   }
@@ -60,7 +65,7 @@ export const yamlifySecrets = (secrets: Secret[]) => {
       root[s.secretKey] = encryptValue(s.secretValue, key);
     }
   }
-  return { key, yaml: stringify(root) };
+  return { key, yaml: Object.keys(root).length > 0 ? stringify(root) : "" };
 };
 
 const encryptValue = (secret: string, key: string) => {
@@ -73,7 +78,7 @@ const encryptValue = (secret: string, key: string) => {
 };
 
 export const writeEnsuringDir = async (
-  files: { path: string; text: string }[]
+  files: { path: string; text: string }[],
 ) => {
   for (const file of files) {
     await Deno.mkdir(dirname(file.path), { recursive: true });
@@ -82,20 +87,19 @@ export const writeEnsuringDir = async (
 };
 
 export const getInfisicalDomain = async () => {
-  const home =
-    Deno.build.os === "windows"
-      ? Deno.env.get("USERPROFILE")
-      : Deno.env.get("HOME");
+  const home = Deno.build.os === "windows"
+    ? Deno.env.get("USERPROFILE")
+    : Deno.env.get("HOME");
 
   if (!home) throw new Error("Cannot resolve home directory");
   const config = JSON.parse(
-    await Deno.readTextFile(join(home, ".infisical", "infisical-config.json"))
+    await Deno.readTextFile(join(home, ".infisical", "infisical-config.json")),
   );
   if (config.LoggedInUserDomain) {
     return config.LoggedInUserDomain.split("/api")[0];
   } else {
     console.error(
-      "Cannot find infisical-config.json file with logged in user domain. Ensure you are logged in to Infisical."
+      "Cannot find infisical-config.json file with logged in user domain. Ensure you are logged in to Infisical.",
     );
     Deno.exit(1);
   }
@@ -113,8 +117,8 @@ export const getKeyAndYamlFromInfisical = async () => {
   client.auth().accessToken(token);
   const { workspaceId, defaultEnvironment } = await loadInfisicalConfig();
   const projectId = Deno.env.get("INFISICAL_PROJECT") ?? workspaceId;
-  const environment =
-    Deno.env.get("INFISICAL_ENVIRONMENT") ?? defaultEnvironment;
+  const environment = Deno.env.get("INFISICAL_ENVIRONMENT") ??
+    defaultEnvironment;
 
   if (!projectId || !environment) {
     console.error("workspaceId and defaultEnvironment not defined. Exiting...");
@@ -139,34 +143,38 @@ export const readTextFileSafe = async (path: string) => {
 };
 
 export const CWD = await findInfisicalConfigDir();
+export const GITIGNORE_PATH = join(CWD, ".gitignore");
+export const TARGET_PATH = join(CWD, "target");
 export const ENCRYPT_PATH = join(CWD, "src/main/mule/encrypt.key.xml");
 export const SECRETS_XML_PATH = join(CWD, "src/main/mule/secrets.xml");
-export const SECRETS_YAML_PATH = join(CWD, "src/main/resources/secrets.yaml");
-export const getSecretsYamlPath = (environment: string) => join(CWD, `src/main/resources/secrets-${environment}.yaml`)
+export const RESOURCE_PATH = join(CWD, "src/main/resources");
+export const SECRETS_YAML_PATH = join(RESOURCE_PATH, "secrets.yaml");
+export const getSecretsYamlPath = (environment: string) =>
+  join(RESOURCE_PATH, `secrets-${environment}.yaml`);
 
 export const getInfisicalEnvironments = async (projectId: string) => {
   const resp = await fetch(
     `${await getInfisicalDomain()}/api/v1/workspace/${projectId}`,
     {
       headers: { Authorization: `Bearer ${await getToken()}` },
-    }
+    },
   );
   const body = (await resp.json()) as
     | {
-        workspace: {
-          environments: {
-            slug: string;
-          }[];
-        };
-      }
-    | {
-        message: string;
+      workspace: {
+        environments: {
+          slug: string;
+        }[];
       };
+    }
+    | {
+      message: string;
+    };
   if (!("workspace" in body)) {
     console.log(
       `Error listing available environments${
         "message" in body ? `: ${body.message}` : ""
-      }`
+      }`,
     );
     Deno.exit(1);
   }
@@ -174,7 +182,7 @@ export const getInfisicalEnvironments = async (projectId: string) => {
 };
 
 export const getFinalConfiguration = async (
-  options: Parameters<Parameters<typeof cmd.action>[0]>[0]
+  options: Parameters<Parameters<typeof cmd.action>[0]>[0],
 ) => {
   const { workspaceId, defaultEnvironment } = await loadInfisicalConfig();
   const projectId = options.project ?? workspaceId;
@@ -188,4 +196,108 @@ export const getFinalConfiguration = async (
     Deno.exit(1);
   }
   return { projectId, environment };
+};
+
+export const getFilesToWrite = async (
+  options: Parameters<Parameters<typeof cmd.action>[0]>[0],
+) => {
+  const client = new InfisicalSDK({
+    siteUrl: await getInfisicalDomain(),
+  });
+  client.auth().accessToken(await getToken());
+  const { projectId, environment } = await getFinalConfiguration(options);
+
+  const environmentOptions = await getInfisicalEnvironments(projectId);
+
+  const filesToWrite: { path: string; text: string }[] = [];
+
+  if (options.allEnv) {
+    let defaultEncryptKey: string | undefined;
+    for (const e of environmentOptions) {
+      const s = await client.secrets().listSecrets({
+        environment: e,
+        projectId,
+        recursive: true,
+      });
+      // Get Encryption Key
+      if (
+        s.secrets.find(
+          (sec) =>
+            (!sec.secretPath || sec.secretPath === "/") &&
+            sec.secretKey === "encrypt.key",
+        )?.secretValue
+      ) {
+        const { key, yaml } = yamlifySecrets(s.secrets);
+        if (e === environment) defaultEncryptKey = key;
+        filesToWrite.push({ path: getSecretsYamlPath(e), text: yaml });
+      } else {
+        console.log(
+          `encrypt.key not specified for "${e}" environment. Skipping...`,
+        );
+      }
+    }
+    filesToWrite.push(
+      ...[
+        {
+          path: ENCRYPT_PATH,
+          text: getEncryptKeyEnvironmentXML(defaultEncryptKey, environment),
+        },
+        { path: SECRETS_XML_PATH, text: secretsEnvironmentXML },
+      ],
+    );
+  } else {
+    // Check environment
+    if (!environmentOptions.includes(environment)) {
+      console.log(
+        `Specified environment "${environment}" not included in options: ${environmentOptions}`,
+      );
+      Deno.exit(1);
+    }
+
+    const s = await client.secrets().listSecrets({
+      environment,
+      projectId,
+      recursive: true,
+    });
+
+    const { key, yaml } = yamlifySecrets(s.secrets);
+
+    filesToWrite.push(
+      ...[
+        { path: ENCRYPT_PATH, text: getEncryptKeyXML(key) },
+        { path: SECRETS_XML_PATH, text: secretsXML },
+        { path: SECRETS_YAML_PATH, text: yaml },
+      ],
+    );
+  }
+
+  return filesToWrite;
+};
+
+export const removeSecretsFiles = async () => {
+  const deletedFiles: { path: string; text: string }[] = [];
+
+  const wildCardFilePaths: string[] = [];
+  for await (const f of Deno.readDir(RESOURCE_PATH)) {
+    if (f.isFile && /^secrets-.*\.yaml$/.test(f.name)) {
+      wildCardFilePaths.push(join(RESOURCE_PATH, f.name));
+    }
+  }
+
+  for (
+    const path of [
+      ENCRYPT_PATH,
+      SECRETS_XML_PATH,
+      SECRETS_YAML_PATH,
+      ...wildCardFilePaths,
+    ]
+  ) {
+    const text = await readTextFileSafe(path);
+    if (text !== undefined) {
+      await Deno.remove(path);
+      deletedFiles.push({ path, text });
+    }
+  }
+
+  return deletedFiles;
 };

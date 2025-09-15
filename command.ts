@@ -1,8 +1,8 @@
-
 import { Command } from "@cliffy/command";
 import cfg from "./deno.json" with { type: "json" };
 import { inject } from "./inject.ts";
 import { build } from "./build.ts";
+import { removeSecretsFiles } from "./utils.ts";
 
 export const cmd = new Command()
   // Main command.
@@ -21,15 +21,26 @@ export const cmd = new Command()
 export const cmdInject = cmd
   .command("inject", "Inject secrets setup into project")
   .option("-g, --git-ignore", "Include .gitignore")
-  .action(inject)
+  .action(inject);
 
 // Build jar command
 export const cmdBuild = cmd
   .command("build", "Build jar export for Anypoint")
-  .option("-m, --manual", `Waits for Anypoint export
+  .option(
+    "-m, --manual",
+    `Waits for Anypoint export
 * Use if you don't have mvn installed
-* NOT YET IMPLEMENTED`)
-  .option("-o, --output <filename:file>", `Name of output file
+* NOT YET IMPLEMENTED`,
+  )
+  .option(
+    "-o, --output <filename:file>",
+    `Name of output file
 * Use {e} to add the environment
-* Default: parentFolder-{e}.jar`)
-  .action(build)
+* Default: parentFolder-{e}.jar`,
+  )
+  .action(build);
+
+// Clean command
+cmd
+  .command("clean", "Remove all files relating to secrets")
+  .action(async () => await removeSecretsFiles());

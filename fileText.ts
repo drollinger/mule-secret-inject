@@ -9,15 +9,22 @@ export const getEncryptKeyXML = (encryptKey: string) =>
 </mule>
 `;
 
-export const getEncryptKeyEnvironmentXML = (encryptKey: string | undefined, environment: string | undefined) =>
+export const getEncryptKeyEnvironmentXML = (
+  encryptKey: string | undefined,
+  environment: string | undefined,
+) =>
   `\
 <?xml version="1.0" encoding="UTF-8"?>
 
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
-	<global-property doc:name="Global Property" name="encrypt.key" value="${encryptKey ?? ''}" />
-	<global-property doc:name="Global Property" name="env" value="${environment ?? ''}" />
+	<global-property doc:name="Global Property" name="encrypt.key" value="${
+    encryptKey ?? ""
+  }" />
+	<global-property doc:name="Global Property" name="env" value="${
+    environment ?? ""
+  }" />
 </mule>
 `;
 
@@ -45,4 +52,41 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 		<secure-properties:encrypt algorithm="Blowfish" />
 	</secure-properties:config>
 </mule>
+`;
+
+export const gitignoreText = `\
+# Eclipse Specific
+*.class
+*.jar
+*.war
+*.ear
+*.pydevproject
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.project
+.classpath
+.externalToolBuilders/
+*.launch
+.cproject
+.buildpath
+target/
+.mule/
+.DS_Store
+velocity.log
+
+# Secrets
+exchange-docs/
+secrets.yaml
+secrets.xml
+encrypt.key.xml
+secrets-*.yaml
 `;

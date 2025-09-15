@@ -1,32 +1,77 @@
+import { basename, dirname, join } from "@std/path";
 import type { cmdBuild } from "./command.ts";
+import {
+  CWD,
+  ENCRYPT_PATH,
+  getFilesToWrite,
+  getFinalConfiguration,
+  removeSecretsFiles,
+  TARGET_PATH,
+  writeEnsuringDir,
+} from "./utils.ts";
 
 export const build = async (
-  _options: Parameters<Parameters<typeof cmdBuild.action>[0]>[0]
+  options: Parameters<Parameters<typeof cmdBuild.action>[0]>[0],
 ) => {
-  console.log("This is not yet implemented")
-  // const encryptFileText = await readTextFileSafe(ENCRYPT_PATH);
-  // if (encryptFileText) await Deno.remove(ENCRYPT_PATH);
+  // Get files first to ensure the program doesn't exit on any issues
+  const filesToWrite = await getFilesToWrite(options);
 
-  // const [envName] = Deno.args;
-  // if (envName) {
-  //   // Save old files to memory
-  //   //"-Dproject.build.finalName=myapp"
-  //   console.log(`Pulling environment ${envName} for build injection...`);
-  //   const { key, yaml } = await getKeyAndYamlFromInfisical();
-  //   // Write the files
-  //   await writeEnsuringDir([
-  //     { path: ENCRYPT_PATH, text: getEncryptKeyXML(key) },
-  //     { path: SECRETS_XML_PATH, text: secretsXML },
-  //     { path: SECRETS_YAML_PATH, text: yaml },
-  //   ]);
-  // } else {
-  // }
+  // Remove all existing secrets files
+  const deletedFiles = await removeSecretsFiles();
 
-  // const cmd = new Deno.Command("mvn", {
-  //   args: ["-DjarName=myapp", "-Dclassifier=notherone", "clean", "package"],
-  //   cwd: CWD,
-  // });
-  // const { code, stdout, stderr } = await cmd.output();
+  // Write all new secrets files except the encrypt file
+  await writeEnsuringDir(
+    filesToWrite.filter((file) => file.path !== ENCRYPT_PATH),
+  );
 
-  // if (encryptFileText) await Deno.writeTextFile(ENCRYPT_PATH, encryptFileText);
+  if (options.manual) {
+    console.log("Files configured to manually build");
+    prompt("Waiting... (Press enter after building in Anypoint)");
+  } else {
+    try {
+      console.log("Building jar...");
+      const cmd = new Deno.Command("mvn", {
+        args: ["clean", "package"],
+        cwd: CWD,
+      });
+      await cmd.output();
+    } catch (e) {
+      console.log("mvn clean package threw error => " + e);
+      console.log("Restoring original secrets");
+      await removeSecretsFiles();
+      await writeEnsuringDir(deletedFiles);
+      Deno.exit(1);
+    }
+    let wroteNewJar = false;
+    for await (const e of Deno.readDir(TARGET_PATH)) {
+      if (e.isFile && e.name.endsWith(".jar")) {
+        const { environment } = await getFinalConfiguration(options);
+        const newJarName = `${basename(CWD)}-${
+          options.allEnv ? "all" : environment
+        }.jar`;
+        if (options.output) {
+          const fullFilePath = options.output.endsWith("/")
+            ? join(TARGET_PATH, options.output, newJarName)
+            : join(TARGET_PATH, options.output);
+          await Deno.mkdir(dirname(fullFilePath), { recursive: true });
+          await Deno.rename(join(TARGET_PATH, e.name), fullFilePath);
+          console.log(`Jar file saved to ${fullFilePath}`);
+        } else {
+          await Deno.rename(
+            join(TARGET_PATH, e.name),
+            join(TARGET_PATH, newJarName),
+          );
+          console.log("Jar file saved");
+        }
+        wroteNewJar = true;
+        break;
+      }
+    }
+    if (!wroteNewJar) {
+      console.log("Could not find output jar from mvn clean package!");
+    }
+  }
+  console.log("Restoring original secrets");
+  await removeSecretsFiles();
+  await writeEnsuringDir(deletedFiles);
 };
