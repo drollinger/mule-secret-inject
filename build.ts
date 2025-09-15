@@ -49,20 +49,22 @@ export const build = async (
         const newJarName = `${basename(CWD)}-${
           options.allEnv ? "all" : environment
         }.jar`;
+        let fullFilePath: string;
         if (options.output) {
-          const fullFilePath = options.output.endsWith("/")
-            ? join(TARGET_PATH, options.output, newJarName)
-            : join(TARGET_PATH, options.output);
+          fullFilePath = (
+            options.output.endsWith("/")
+              ? join(TARGET_PATH, options.output, newJarName)
+              : join(TARGET_PATH, options.output)
+          ).replaceAll("{e}", environment);
           await Deno.mkdir(dirname(fullFilePath), { recursive: true });
-          await Deno.rename(join(TARGET_PATH, e.name), fullFilePath);
-          console.log(`Jar file saved to ${fullFilePath}`);
         } else {
-          await Deno.rename(
-            join(TARGET_PATH, e.name),
-            join(TARGET_PATH, newJarName),
+          fullFilePath = join(TARGET_PATH, newJarName).replaceAll(
+            "{e}",
+            environment,
           );
-          console.log("Jar file saved");
         }
+        await Deno.rename(join(TARGET_PATH, e.name), fullFilePath);
+        console.log(`Jar file saved to ${fullFilePath}`);
         wroteNewJar = true;
         break;
       }

@@ -29,14 +29,14 @@ export const cmdBuild = cmd
   .option(
     "-m, --manual",
     `Waits for Anypoint export
-* Use if you don't have mvn installed
-* NOT YET IMPLEMENTED`,
+* Use if you don't have mvn installed`,
   )
   .option(
     "-o, --output <filename:file>",
     `Name of output file
 * Use {e} to add the environment
-* Default: parentFolder-{e}.jar`,
+* Default: parentFolder-{e}.jar
+* End with '/' to specify only directory`,
   )
   .action(build);
 
